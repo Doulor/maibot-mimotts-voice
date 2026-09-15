@@ -164,18 +164,11 @@ class AIVoicePlugin(MaiBotPlugin):
         self.ctx.logger.info("Sending voice to stream=%s, b64_len=%d", stream_id, len(audio_b64))
 
         b64_url = f"base64://{audio_b64}"
-        # 原始引用可以释放（如果调用方已 del 则无额外效果，但作为安全措施）
         audio_b64 = ""
 
-        # Method 1: record type with base64 (NapCat standard for voice)
-        try:
-            await self.ctx.send.custom("record", {"file": b64_url}, stream_id)
-            self.ctx.logger.info("Sent via record+base64")
-            return True
-        except Exception as e:
-            self.ctx.logger.warning("record+base64 failed: %s", e)
-
-        # Method 2: voice type with base64
+        # Use "voice" type — this is the MaiBot SDK's host-side convention.
+        # Both NapCat adapter and SnowLuma adapter convert it to OneBot "record" on output.
+        # Using "record" directly breaks on SnowLuma (no outbound converter for that type).
         try:
             await self.ctx.send.custom("voice", {"file": b64_url}, stream_id)
             self.ctx.logger.info("Sent via voice+base64")
